@@ -1,0 +1,1082 @@
+
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Corporate Debt & Liquidity Monte Carlo Simulation Platform</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            brand: {
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Smooth theme transitions */
+    html {
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    .dark ::-webkit-scrollbar-track { background: #0f172a; }
+    .dark ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+
+    /* Dark Mode Glass */
+    .dark .glass-panel {
+      background: rgba(15, 23, 42, 0.82);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    /* Light Mode Glass */
+    html:not(.dark) .glass-panel {
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(226, 232, 240, 0.9);
+      box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.04);
+    }
+
+    .metric-card {
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .metric-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.35);
+    }
+    .badge-pulse { animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+    @keyframes pulse-ring { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+    input[type=number]::-webkit-inner-spin-button, 
+    input[type=number]::-webkit-outer-spin-button { 
+      opacity: 0.8;
+    }
+  
+    /* Theme enhancements for Light Mode */
+    html:not(.dark) #mainHeader, html:not(.dark) #subHeaderNav {
+      background-color: rgba(255, 255, 255, 0.95);
+      border-color: #e2e8f0;
+    }
+    html:not(.dark) #appTitle, html:not(.dark) #settingsHeading {
+      color: #0f172a;
+    }
+    html:not(.dark) .bg-slate-900, html:not(.dark) .bg-slate-950 {
+      background-color: #ffffff;
+      border-color: #cbd5e1;
+    }
+    html:not(.dark) .bg-slate-800 {
+      background-color: #f1f5f9;
+      border-color: #e2e8f0;
+    }
+    html:not(.dark) .text-slate-200, html:not(.dark) .text-slate-100 {
+      color: #0f172a !important;
+    }
+    html:not(.dark) .text-slate-300 {
+      color: #334155 !important;
+    }
+    html:not(.dark) .text-slate-400 {
+      color: #64748b !important;
+    }
+    html:not(.dark) input[type=number] {
+      color: #0f172a !important;
+    }
+    html:not(.dark) #industryBox {
+      background: linear-gradient(to right, rgba(239, 246, 255, 0.7), rgba(241, 245, 249, 0.8));
+      border-color: #bfdbfe;
+    }
+    html:not(.dark) #industryProfileCard {
+      background-color: #f8fafc;
+      border-color: #e2e8f0;
+    }
+    html:not(.dark) #industrySelect {
+      background-color: #ffffff;
+      color: #0f172a;
+      border-color: #93c5fd;
+    }
+
+  </style>
+</head>
+<body class="bg-[#090d16] text-slate-100 min-h-screen flex flex-col font-sans transition-colors duration-300 selection:bg-blue-600 selection:text-white" id="mainBody">
+
+  <!-- TOP APP HEADER -->
+  <header class="border-b border-slate-800 bg-[#0c1220]/95 sticky top-0 z-50 backdrop-blur-md transition-colors duration-300" id="mainHeader">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      
+      <!-- Brand & Title -->
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-sky-400 flex items-center justify-center shadow-lg shadow-blue-500/20">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <h1 class="text-base font-bold text-white tracking-tight" id="appTitle">FinRisk Monte Carlo</h1>
+            <span class="px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full" id="currBadge">USD ($)</span>
+          </div>
+          <p class="text-xs text-slate-400 hidden sm:block" id="appSubtitle">Sector-Specific Macroeconomic Sensitivity & DSCR Covenant Stress Simulator</p>
+        </div>
+      </div>
+      
+      <!-- Right Auth, Settings & Action Controls -->
+      <div class="flex items-center space-x-2 sm:space-x-3">
+        
+        <!-- Settings Button -->
+        <button onclick="openSettingsModal()" title="Platform Settings & Preferences" class="inline-flex items-center px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
+          <svg class="w-4 h-4 mr-1 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          <span class="hidden sm:inline">Settings</span>
+        </button>
+
+        <!-- User Management Button (Only shown if can_manage_users) -->
+        <button id="btnOpenUserMgmt" onclick="openUserMgmtModal()" class="hidden items-center px-3 py-1.5 text-xs font-semibold rounded-lg bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 border border-indigo-500/30 transition">
+          <svg class="w-4 h-4 mr-1 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+          <span class="hidden md:inline">Users & Rights</span>
+        </button>
+
+        <!-- Quick Re-Run Button -->
+        <button id="quickRunBtn" onclick="runSimulation()" class="inline-flex items-center px-3.5 py-1.5 text-xs font-semibold rounded-lg text-white bg-blue-600 hover:bg-blue-500 transition shadow-lg shadow-blue-600/30">
+          <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+          Re-Simulate (F9)
+        </button>
+
+        <!-- User Profile Pill / Switch Trigger -->
+        <div id="userProfileHeader" class="flex items-center space-x-2 pl-2 border-l border-slate-800">
+          <div class="flex items-center space-x-2 bg-slate-900/90 border border-slate-800 px-3 py-1 rounded-xl" id="profileBox">
+            <div class="w-6 h-6 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-500 flex items-center justify-center text-xs font-bold text-white uppercase" id="userAvatar">A</div>
+            <div class="text-left hidden sm:block">
+              <div class="text-xs font-bold text-slate-200 leading-tight" id="headerUsername">admin</div>
+              <div class="text-[10px] text-amber-400 font-mono leading-tight" id="headerRole">Administrator</div>
+            </div>
+          </div>
+          <button onclick="handleLogout()" title="Logout / Switch Account" class="p-2 text-slate-400 hover:text-rose-400 bg-slate-900 border border-slate-800 rounded-lg transition" id="logoutBtn">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- Single Authorized Workspace Bar -->
+  <div class="border-b border-slate-800/80 bg-[#090d16]/95 sticky top-16 z-40 transition-colors duration-300" id="subHeaderNav">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-12 flex items-center justify-between">
+      <div id="singleActiveTabContainer" class="flex items-center space-x-2">
+        <!-- Dynamically rendered single workspace title -->
+      </div>
+      <div class="flex items-center space-x-2 text-[11px] text-slate-400">
+        <span>Active Rights:</span>
+        <div id="permissionsPills" class="flex items-center space-x-1 font-mono"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN DASHBOARD CONTENT -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full flex-grow space-y-6">
+
+    <!-- Read-Only Banner -->
+    <div id="readOnlyWarningBanner" class="hidden glass-panel border border-amber-500/30 rounded-xl p-3 bg-amber-950/20 flex items-center justify-between">
+      <div class="flex items-center space-x-2 text-xs text-amber-200">
+        <span>⚠️</span>
+        <span><strong>Read-Only Mode:</strong> Your account has Viewer access. You can inspect distributions, but running simulations or modifying inputs is restricted.</span>
+      </div>
+      <button onclick="openLoginModal()" class="text-xs font-mono text-amber-400 underline hover:text-amber-300">Switch Account</button>
+    </div>
+
+    <!-- TOP SECTION: KPI SCORECARD -->
+    <section>
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-sm font-semibold text-slate-200 tracking-wide uppercase flex items-center gap-2" id="kpiTitleHeader">
+          <span>Executive Risk & Covenant Scorecard</span>
+          <span class="text-[11px] font-normal text-slate-400 capitalize">(1,000 Monte Carlo Iterations)</span>
+        </h2>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        
+        <!-- Insolvency Risk -->
+        <div class="metric-card glass-panel rounded-xl p-4 relative overflow-hidden border-l-4" id="cardInsolvency">
+          <div class="flex items-center justify-between text-xs text-slate-400">
+            <span>Probability of Insolvency</span>
+            <span class="p-1 rounded bg-rose-500/10 text-rose-400 font-mono text-[10px]">Tail Risk</span>
+          </div>
+          <div class="mt-2 flex items-baseline justify-between">
+            <span class="text-2xl font-bold font-mono tracking-tight" id="kpiInsolvency">0.0%</span>
+            <span class="text-xs text-slate-400" id="lblCashZero">Cash &lt; 0</span>
+          </div>
+          <div class="mt-2 text-xs text-slate-400 leading-tight">
+            Probability company exhausts all liquid cash reserves.
+          </div>
+        </div>
+
+        <!-- Covenant Breach Probability -->
+        <div class="metric-card glass-panel rounded-xl p-4 relative overflow-hidden border-l-4" id="cardBreach">
+          <div class="flex items-center justify-between text-xs text-slate-400">
+            <span>Covenant Breach Probability</span>
+            <span class="p-1 rounded bg-amber-500/10 text-amber-400 font-mono text-[10px]" id="kpiCovenantThreshold">DSCR &lt; 1.25x</span>
+          </div>
+          <div class="mt-2 flex items-baseline justify-between">
+            <span class="text-2xl font-bold font-mono tracking-tight" id="kpiBreach">0.0%</span>
+            <span class="text-xs text-slate-400">Bank Default Trigger</span>
+          </div>
+          <div class="mt-2 text-xs text-slate-400 leading-tight">
+            Chance NOI fails bank covenant threshold.
+          </div>
+        </div>
+
+        <!-- Average Expected Cash -->
+        <div class="metric-card glass-panel rounded-xl p-4 relative overflow-hidden border-l-4 border-l-blue-500">
+          <div class="flex items-center justify-between text-xs text-slate-400">
+            <span>Average Expected Cash</span>
+            <span class="p-1 rounded bg-blue-500/10 text-blue-400 font-mono text-[10px]">Expected Baseline</span>
+          </div>
+          <div class="mt-2 flex items-baseline justify-between">
+            <span class="text-2xl font-bold font-mono tracking-tight text-white" id="kpiAvgCash">0</span>
+            <span class="text-xs text-emerald-400 font-mono" id="kpiCashSpread">5th: 0</span>
+          </div>
+          <div class="mt-2 text-xs text-slate-400 leading-tight">
+            Realistic year-end liquidity benchmark.
+          </div>
+        </div>
+
+        <!-- Average & Worst DSCR -->
+        <div class="metric-card glass-panel rounded-xl p-4 relative overflow-hidden border-l-4 border-l-indigo-500">
+          <div class="flex items-center justify-between text-xs text-slate-400">
+            <span>Average DSCR (5th %ile)</span>
+            <span class="p-1 rounded bg-indigo-500/10 text-indigo-400 font-mono text-[10px]">Debt Safety</span>
+          </div>
+          <div class="mt-2 flex items-baseline justify-between">
+            <span class="text-2xl font-bold font-mono tracking-tight text-white" id="kpiAvgDSCR">0.00x</span>
+            <span class="text-xs text-rose-400 font-mono" id="kpiTailDSCR">5th: 0.00x</span>
+          </div>
+          <div class="mt-2 text-xs text-slate-400 leading-tight">
+            Operating debt coverage resilience under stress.
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Second Row of Metrics -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+        
+        <div class="glass-panel rounded-xl p-4 border border-slate-800 flex items-center justify-between">
+          <div>
+            <div class="text-xs text-slate-400 font-medium">Optimal Cash Reserve Buffer (<span id="dispXPercentile">50%</span> Risk Floor)</div>
+            <div class="text-xl font-bold font-mono text-emerald-400 mt-1" id="kpiOptimalBuffer">0</div>
+            <div class="text-[11px] text-slate-400 mt-0.5">Required buffer: <span class="font-mono text-slate-300" id="kpiMinAllowedNOI">0</span> Min NOI − <span class="font-mono text-slate-300" id="kpiXthNOI">0</span> Xth NOI</div>
+          </div>
+          <div class="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-xl font-bold">🛡️</div>
+        </div>
+
+        <div class="glass-panel rounded-xl p-4 border border-slate-800 flex items-center justify-between">
+          <div>
+            <div class="text-xs text-slate-400 font-medium">Annual Opportunity Cost of Buffer</div>
+            <div class="text-xl font-bold font-mono text-amber-400 mt-1" id="kpiOppCost">0 / yr</div>
+            <div class="text-[11px] text-slate-400 mt-0.5">Spread: <span class="font-mono text-slate-300" id="kpiNetSpread">8.0%</span> (<span id="dispHurdle">12%</span> Hurdle − <span id="dispYield">4%</span> Yield)</div>
+          </div>
+          <div class="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center text-xl font-bold">⚖️</div>
+        </div>
+
+        <div class="glass-panel rounded-xl p-4 border border-slate-800 flex items-center justify-between">
+          <div>
+            <div class="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
+              <span>Annual Total Debt Service (P + I)</span>
+              <span id="badgeLiveRate" class="px-1.5 py-0.2 rounded bg-sky-500/20 text-sky-300 font-mono text-[10px]">15.00%</span>
+            </div>
+            <div class="text-xl font-bold font-mono text-sky-400 mt-1" id="kpiTotalDebtService">0</div>
+            <div class="text-[11px] text-slate-400 mt-0.5">Sim Interest: <span class="font-mono text-slate-300" id="kpiSimInterest">0</span> + Principal: <span class="font-mono text-slate-300" id="kpiPrincipalRepay">0</span></div>
+            <div class="text-[10px] text-slate-500 mt-0.5 font-mono">1,000-Run Mean Debt Service: <span id="kpiMeanDebtService" class="text-slate-400">0</span></div>
+          </div>
+          <div class="w-12 h-12 rounded-xl bg-sky-500/10 text-sky-400 flex items-center justify-center text-xl font-bold">🏛️</div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- WORKSPACE: USER SIMULATION SECTION vs ADMIN CONFIGURATION SECTION -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+      <!-- LEFT COLUMN: USER SIMULATION WORKSPACE (INDUSTRY IDENTIFICATION & NUMERIC INPUTS) -->
+      <section id="userSimulationSection" class="lg:col-span-5 space-y-6">
+        
+        <div class="glass-panel rounded-2xl p-5 border border-blue-500/30 relative space-y-5">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+            <div class="flex items-center space-x-2">
+              <span class="flex h-3 w-3 relative">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
+              </span>
+              <h3 class="text-sm font-bold text-white uppercase tracking-wider">User Simulation Workspace</h3>
+            </div>
+            <span class="text-xs bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded font-mono">Numeric Input</span>
+          </div>
+
+          <!-- INDUSTRY IDENTIFICATION SELECTOR -->
+          <div class="bg-gradient-to-r from-blue-950/40 via-indigo-950/30 to-slate-900/60 p-3.5 rounded-xl border border-blue-500/30" id="industryBox">
+            <div class="flex items-center justify-between mb-1.5">
+              <label for="industrySelect" class="text-xs font-bold text-blue-300 flex items-center gap-1.5 uppercase tracking-wide">
+                <span>🏢 1. Industry Identification & Sector Classification</span>
+              </label>
+              <span class="text-[10px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.2 rounded font-mono">Macro Auto-Calibrated</span>
+            </div>
+            <p class="text-[11px] text-slate-400 mb-2">
+              Selecting an industry auto-calibrates macroeconomic volatility, inflation cost sensitivity, credit spreads, and bank covenants.
+            </p>
+            <select id="industrySelect" onchange="onIndustryChange(this.value)" class="w-full bg-slate-900 border border-blue-500/50 rounded-lg px-3 py-2 text-xs font-medium text-white focus:outline-none focus:border-blue-400">
+              <option value="saas_tech">💻 Software & Enterprise Cloud (SaaS)</option>
+              <option value="manufacturing">🏭 Industrial Manufacturing & Heavy Equipment</option>
+              <option value="retail_consumer">🛒 Retail, Wholesale & FMCG Distribution</option>
+              <option value="construction_realestate">🏗️ Construction, Contracting & Real Estate</option>
+              <option value="healthcare_pharma">🏥 Healthcare Providers & Pharmaceuticals</option>
+              <option value="energy_utilities">⚡ Energy, Utilities & Infrastructure</option>
+              <option value="generic_excel" selected>📊 Standard Corporate Baseline</option>
+            </select>
+
+            <!-- Dynamic Industry Macroeconomic Sensitivity Profile Card -->
+            <div id="industryProfileCard" class="mt-3 p-3 bg-slate-950/70 rounded-lg border border-slate-800 text-[11px] space-y-1.5">
+              <div class="flex items-center justify-between text-slate-300">
+                <span class="text-slate-400">GDP & Cyclicality Sensitivity:</span>
+                <span id="indGdpBeta" class="font-mono font-semibold text-amber-300">Standard</span>
+              </div>
+              <div class="flex items-center justify-between text-slate-300">
+                <span class="text-slate-400">Inflation / PPI Cost Pass-Through:</span>
+                <span id="indInflationSens" class="font-mono font-semibold text-blue-300">Standard</span>
+              </div>
+              <div class="flex items-center justify-between text-slate-300">
+                <span class="text-slate-400">Lender Minimum DSCR Requirement:</span>
+                <span id="indCovenantReq" class="font-mono font-semibold text-emerald-300">1.25x</span>
+              </div>
+              <div class="flex items-center justify-between text-slate-300">
+                <span class="text-slate-400">Working Capital / Cash Conversion:</span>
+                <span id="indWorkingCapital" class="font-mono font-semibold text-sky-300">Standard</span>
+              </div>
+            </div>
+          </div>
+
+          <form id="simForm" onsubmit="event.preventDefault(); runSimulation();" class="space-y-4">
+            
+            <!-- Category 2: Operational & Cash Drivers -->
+            <div class="space-y-3">
+              <div class="text-xs font-semibold text-blue-400 uppercase tracking-wider flex items-center justify-between">
+                <span>2. Operational & Cash Drivers</span>
+              </div>
+
+              <!-- Base Baseline Revenue -->
+              <div>
+                <label for="baseRevenue" class="block text-xs font-medium text-slate-300 mb-1">
+                  Base Baseline Revenue (<span class="currencyLabel">USD</span>)
+                </label>
+                <div class="flex rounded-lg shadow-sm border border-slate-700 bg-slate-900 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 overflow-hidden transition">
+                  <span class="inline-flex items-center px-3 bg-slate-800/80 text-slate-400 text-xs font-mono font-semibold border-r border-slate-700 currencySymbol min-w-[50px] justify-center select-none">$</span>
+                  <input type="text" inputmode="numeric" id="baseRevenue" value="2,000,000"
+                    class="w-full bg-transparent border-0 px-3 py-2 text-xs font-mono text-slate-200 text-right focus:outline-none focus:ring-0"
+                    oninput="formatNumberInput(this)" onchange="runSimulation()">
+                </div>
+              </div>
+
+              <!-- Starting Cash Balance -->
+              <div>
+                <label for="startingCash" class="block text-xs font-medium text-slate-300 mb-1">
+                  Starting Cash Balance (<span class="currencyLabel">USD</span>)
+                </label>
+                <div class="flex rounded-lg shadow-sm border border-slate-700 bg-slate-900 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 overflow-hidden transition">
+                  <span class="inline-flex items-center px-3 bg-slate-800/80 text-slate-400 text-xs font-mono font-semibold border-r border-slate-700 currencySymbol min-w-[50px] justify-center select-none">$</span>
+                  <input type="text" inputmode="numeric" id="startingCash" value="1,500,000"
+                    class="w-full bg-transparent border-0 px-3 py-2 text-xs font-mono text-slate-200 text-right focus:outline-none focus:ring-0"
+                    oninput="formatNumberInput(this)" onchange="runSimulation()">
+                </div>
+              </div>
+
+              <!-- Fixed Annual Base Cost -->
+              <div>
+                <div class="flex justify-between items-center mb-1">
+                  <label for="fixedCost" class="block text-xs font-medium text-amber-300">
+                    Fixed Annual Base Cost (<span class="currencyLabel">USD</span>)
+                  </label>
+                  <span class="text-[10px] text-slate-400">Salaries, rent, software</span>
+                </div>
+                <div class="flex rounded-lg shadow-sm border border-amber-500/50 bg-slate-900 focus-within:border-amber-400 focus-within:ring-1 focus-within:ring-amber-400 overflow-hidden transition">
+                  <span class="inline-flex items-center px-3 bg-amber-950/40 text-amber-300 text-xs font-mono font-semibold border-r border-amber-500/40 currencySymbol min-w-[50px] justify-center select-none">$</span>
+                  <input type="text" inputmode="numeric" id="fixedCost" value="800,000"
+                    class="w-full bg-transparent border-0 px-3 py-2 text-xs font-mono text-amber-200 text-right focus:outline-none focus:ring-0"
+                    oninput="formatNumberInput(this)" onchange="runSimulation()">
+                </div>
+              </div>
+            </div>
+
+            <!-- Category 3: Debt & Principal Amortization -->
+            <div class="pt-3 border-t border-slate-800/80 space-y-3">
+              <div class="text-xs font-semibold text-blue-400 uppercase tracking-wider flex items-center justify-between">
+                <span>3. Corporate Floating Debt</span>
+              </div>
+
+              <!-- Total Floating Debt -->
+              <div>
+                <label for="totalDebt" class="block text-xs font-medium text-slate-300 mb-1">
+                  Total Outstanding Floating Debt (<span class="currencyLabel">USD</span>)
+                </label>
+                <div class="flex rounded-lg shadow-sm border border-slate-700 bg-slate-900 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 overflow-hidden transition">
+                  <span class="inline-flex items-center px-3 bg-slate-800/80 text-slate-400 text-xs font-mono font-semibold border-r border-slate-700 currencySymbol min-w-[50px] justify-center select-none">$</span>
+                  <input type="text" inputmode="numeric" id="totalDebt" value="2,000,000"
+                    class="w-full bg-transparent border-0 px-3 py-2 text-xs font-mono text-slate-200 text-right focus:outline-none focus:ring-0"
+                    oninput="formatNumberInput(this)" onchange="runSimulation()">
+                </div>
+              </div>
+
+              <!-- Mandatory Principal Repayment -->
+              <div>
+                <label for="principalRepayment" class="block text-xs font-medium text-slate-300 mb-1">
+                  Mandatory Principal Repayment (<span class="currencyLabel">USD</span>)
+                </label>
+                <div class="flex rounded-lg shadow-sm border border-slate-700 bg-slate-900 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 overflow-hidden transition">
+                  <span class="inline-flex items-center px-3 bg-slate-800/80 text-slate-400 text-xs font-mono font-semibold border-r border-slate-700 currencySymbol min-w-[50px] justify-center select-none">$</span>
+                  <input type="text" inputmode="numeric" id="principalRepayment" value="100,000"
+                    class="w-full bg-transparent border-0 px-3 py-2 text-xs font-mono text-slate-200 text-right focus:outline-none focus:ring-0"
+                    oninput="formatNumberInput(this)" onchange="runSimulation()">
+                </div>
+              </div>
+            </div>
+
+            <!-- Category 4: Target Reserve Confidence Percentile X -->
+            <div class="pt-3 border-t border-slate-800/80 space-y-3">
+              <div class="text-xs font-semibold text-blue-400 uppercase tracking-wider flex items-center justify-between">
+                <span>4. Target Reserve Percentile (X)</span>
+              </div>
+
+              <div>
+                <label for="percentileX" class="block text-xs font-medium text-slate-300 mb-1">
+                  Percentile Confidence Level (X %)
+                </label>
+                <div class="flex rounded-lg shadow-sm border border-slate-700 bg-slate-900 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 overflow-hidden transition">
+                  <input type="number" id="percentileX" value="50" min="1" max="99" step="1"
+                    class="w-full bg-transparent border-0 px-3 py-2 text-xs font-mono text-slate-200 text-right focus:outline-none focus:ring-0"
+                    onchange="runSimulation()">
+                  <span class="inline-flex items-center px-3 bg-slate-800/80 text-slate-400 text-xs font-mono font-semibold border-l border-slate-700 select-none">%</span>
+                </div>
+                <div class="flex justify-between text-[10px] text-slate-500 font-mono mt-1">
+                  <span>5% (Aggressive)</span>
+                  <span>50% (Median)</span>
+                  <span>95% (Conservative)</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="pt-4 flex items-center gap-3">
+              <button id="btnMainRun" type="button" onclick="runSimulation()" class="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-sm tracking-wide shadow-lg shadow-blue-500/25 flex items-center justify-center space-x-2 transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span>Run 1,000 Iterations</span>
+              </button>
+              <button type="button" onclick="resetToExcelDefaults()" title="Reset to Baseline Defaults" class="p-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+              </button>
+            </div>
+
+          </form>
+        </div>
+
+        <!-- Single Live Simulation Snapshot -->
+        <div class="glass-panel rounded-2xl p-5 border border-slate-800">
+          <div class="flex items-center justify-between pb-2 mb-3 border-b border-slate-800">
+            <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+              <span>Live Run #1 Instant Waterfall</span>
+            </h4>
+            <span class="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded">Deterministic Calc</span>
+          </div>
+
+          <div class="space-y-2 text-xs">
+            <div class="flex justify-between py-1 border-b border-slate-800/50">
+              <span class="text-slate-400">Simulated Revenue:</span>
+              <span class="font-mono text-slate-200" id="snapSimRevenue">0</span>
+            </div>
+            <div class="flex justify-between py-1 border-b border-slate-800/50">
+              <span class="text-slate-400">Fixed Base Cost:</span>
+              <span class="font-mono text-rose-300" id="snapFixedCost">-0</span>
+            </div>
+            <div class="flex justify-between py-1 border-b border-slate-800/50">
+              <span class="text-slate-400">Simulated Variable Cost:</span>
+              <span class="font-mono text-rose-300" id="snapVarCost">-0</span>
+            </div>
+            <div class="flex justify-between py-1 border-b border-slate-800/50">
+              <span class="text-slate-400">Simulated Interest Expense:</span>
+              <span class="font-mono text-rose-300" id="snapInterest">-0</span>
+            </div>
+            <div class="flex justify-between py-1 border-b border-slate-800/50 font-semibold">
+              <span class="text-slate-300">Simulated NOI (Rev - Var - Fixed):</span>
+              <span class="font-mono text-indigo-300" id="snapNOI">0</span>
+            </div>
+            <div class="flex justify-between py-1 border-b border-slate-800/50">
+              <span class="text-slate-400">Ending Cash Balance:</span>
+              <span class="font-mono text-emerald-300 font-semibold" id="snapEndingCash">0</span>
+            </div>
+            <div class="flex justify-between py-1 font-semibold">
+              <span class="text-slate-300">Simulated DSCR Ratio:</span>
+              <span class="font-mono" id="snapDSCR">0.00x</span>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- RIGHT COLUMN: VISUALIZATIONS & SIMULATION RESULTS -->
+      <section id="resultsSection" class="lg:col-span-7 space-y-6">
+        
+        <!-- Chart 1: Cash Distribution -->
+        <div class="glass-panel rounded-2xl p-5 border border-slate-800">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 mb-4 border-b border-slate-800 gap-2">
+            <div>
+              <h3 class="text-sm font-bold text-white tracking-wide">Ending Cash Balance Distribution</h3>
+              <p class="text-xs text-slate-400">1,000 iterations histogram showing Tail Risk (5th %ile) vs. Median and Insolvency threshold</p>
+            </div>
+            <div class="flex items-center space-x-2">
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono bg-rose-500/20 text-rose-300" id="badgeInsolventDesc">Red: &lt; 0 Insolvency</span>
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono bg-blue-500/20 text-blue-300">Blue: Solvent Runs</span>
+            </div>
+          </div>
+          <div class="h-64 sm:h-72 w-full relative">
+            <canvas id="cashDistributionChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Chart 2: DSCR Coverage -->
+        <div class="glass-panel rounded-2xl p-5 border border-slate-800">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 mb-4 border-b border-slate-800 gap-2">
+            <div>
+              <h3 class="text-sm font-bold text-white tracking-wide">Debt Service Coverage Ratio (DSCR) Spread</h3>
+              <p class="text-xs text-slate-400">Assessing banking covenant compliance against minimum threshold</p>
+            </div>
+            <div class="flex items-center space-x-2">
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono bg-amber-500/20 text-amber-300" id="badgeCovenantLine">Covenant Limit: 1.25x</span>
+            </div>
+          </div>
+          <div class="h-64 sm:h-72 w-full relative">
+            <canvas id="dscrDistributionChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Iterations Data Table Sample -->
+        <div class="glass-panel rounded-2xl p-5 border border-slate-800 overflow-hidden">
+          <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-800">
+            <div>
+              <h3 class="text-sm font-bold text-white">Monte Carlo Sample Simulation Records</h3>
+              <p class="text-xs text-slate-400">Displaying first 15 of 1,000 runs</p>
+            </div>
+            <button id="btnExportCSV" onclick="exportSimulationCSV()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs font-mono text-slate-300 rounded-lg transition flex items-center space-x-1.5">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+              <span>Export All 1000 Runs</span>
+            </button>
+          </div>
+
+          <div class="overflow-x-auto max-h-64 overflow-y-auto">
+            <table class="w-full text-left text-xs font-mono">
+              <thead class="bg-slate-900/90 text-slate-400 uppercase text-[10px] sticky top-0" id="sampleTableHead">
+                <tr>
+                  <th class="py-2 px-3">Run #</th>
+                  <th class="py-2 px-3 text-right">Revenue</th>
+                  <th class="py-2 px-3 text-right">Var Cost</th>
+                  <th class="py-2 px-3 text-right">Interest</th>
+                  <th class="py-2 px-3 text-right">End Cash</th>
+                  <th class="py-2 px-3 text-right">DSCR</th>
+                  <th class="py-2 px-3 text-center">Breach?</th>
+                </tr>
+              </thead>
+              <tbody id="runsTableBody" class="divide-y divide-slate-800 text-slate-300"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </section>
+
+    </div>
+
+    <!-- ADMIN CONFIGURATION SECTION: SECTOR MACROECONOMIC MATRIX & GOVERNANCE -->
+    <section id="adminConfigurationSection" class="mt-8 pt-6 border-t border-slate-800/90 space-y-6">
+      
+      <!-- Admin Header -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-amber-500/30 gap-2">
+        <div class="flex items-center space-x-3">
+          <div class="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold">⚙️</div>
+          <div>
+            <h2 class="text-base font-bold text-white flex items-center space-x-2">
+              <span>Admin Macroeconomic Governance & Sector Calibration Matrix</span>
+              <span class="px-2 py-0.5 rounded text-[10px] font-semibold uppercase bg-amber-500/20 text-amber-300 border border-amber-500/30">Restricted Admin Layer</span>
+            </h2>
+            <p class="text-xs text-slate-400">Define macroeconomic variables, statistical boundaries, and sector-unique credit benchmarks</p>
+          </div>
+        </div>
+        <div class="flex items-center space-x-2">
+          <button id="btnSaveAdminConfig" onclick="saveAdminConfig()" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-amber-600 hover:bg-amber-500 text-white transition shadow-sm">
+            Apply Admin Changes
+          </button>
+          <button id="btnResetAdminConfig" onclick="resetAdminDefaults()" class="px-3 py-1.5 text-xs text-slate-400 hover:text-white bg-slate-800 rounded-lg transition">
+            Restore Base Standards
+          </button>
+        </div>
+      </div>
+
+      <!-- Access Denied Banner inside Admin Section if restricted -->
+      <div id="adminLockedMsg" class="hidden glass-panel border border-rose-500/40 rounded-xl p-4 bg-rose-950/20 text-xs text-rose-300">
+        🔒 <strong>Access Restricted:</strong> You do not possess the <code class="font-mono bg-rose-900/50 px-1 py-0.5 rounded">can_configure_admin</code> permission. The inputs below are read-only and cannot be altered by your role.
+      </div>
+
+      <!-- SECTOR COMPARISON MACRO MATRIX TABLE -->
+      <div class="glass-panel rounded-xl p-5 border border-slate-800">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-2">
+            <span>🌐 Sector Macroeconomic Calibration Matrix</span>
+          </h3>
+          <span class="text-[11px] text-slate-400">Click any sector row to load its macro parameters</span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs font-mono">
+            <thead class="bg-slate-900 text-slate-400 text-[10px] uppercase">
+              <tr>
+                <th class="py-2.5 px-3">Industry Sector</th>
+                <th class="py-2.5 px-3">Var Cost Floor/Cap</th>
+                <th class="py-2.5 px-3">Growth Mean & Vol</th>
+                <th class="py-2.5 px-3">Floating Rate Range</th>
+                <th class="py-2.5 px-3">DSCR Covenant</th>
+                <th class="py-2.5 px-3">Hurdle Rate</th>
+                <th class="py-2.5 px-3 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody id="sectorMatrixBody" class="divide-y divide-slate-800 text-slate-300"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Active Macroeconomic Variables Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" id="adminInputsGrid">
+
+        <!-- Card 1: Variable Cost Uniform Margin Boundaries -->
+        <div class="glass-panel rounded-xl p-5 border border-slate-800 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
+            <h4 class="text-xs font-bold text-amber-400 uppercase tracking-wider">A. Variable Cost Bounds</h4>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Min Variable Cost Margin (%)</label>
+            <p class="text-[11px] text-slate-500 mb-1.5">Uniform distribution floor boundary (best-case)</p>
+            <input type="number" id="admMinVarCost" value="30" step="1" min="0" max="100"
+              class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono text-slate-200 focus:outline-none focus:border-amber-500">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Max Variable Cost Margin (%)</label>
+            <p class="text-[11px] text-slate-500 mb-1.5">Uniform distribution ceiling boundary (worst-case)</p>
+            <input type="number" id="admMaxVarCost" value="50" step="1" min="0" max="100"
+              class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono text-slate-200 focus:outline-none focus:border-amber-500">
+          </div>
+        </div>
+
+        <!-- Card 2: Revenue Stochastic Model (FORMULA REMOVED AS REQUESTED) -->
+        <div class="glass-panel rounded-xl p-5 border border-slate-800 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
+            <h4 class="text-xs font-bold text-amber-400 uppercase tracking-wider">B. Revenue Stochastic Model</h4>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Mean Revenue Growth Rate (%)</label>
+            <p class="text-[11px] text-slate-500 mb-1.5">Target annual expected expansion rate (&mu;)</p>
+            <input type="number" id="admMeanGrowth" value="15" step="0.5"
+              class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono text-slate-200 focus:outline-none focus:border-amber-500">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Revenue Volatility / StDev (%)</label>
+            <p class="text-[11px] text-slate-500 mb-1.5">Uncertainty standard deviation swing (&sigma;)</p>
+            <input type="number" id="admRevVolatility" value="10" step="0.5" min="0.1"
+              class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono text-slate-200 focus:outline-none focus:border-amber-500">
+          </div>
+        </div>
+
+        <!-- Card 3: Triangular Floating Interest Rate -->
+        <div class="glass-panel rounded-xl p-5 border border-slate-800 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
+            <h4 class="text-xs font-bold text-amber-400 uppercase tracking-wider">C. Triangular Floating Interest</h4>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Minimum Rate Floor (%)</label>
+            <p class="text-[11px] text-slate-500 mb-1.5">Triangular lower bound (a)</p>
+            <input type="number" id="admMinRate" value="9.0" step="0.25"
+              class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono text-slate-200 focus:outline-none focus:border-amber-500">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Most Likely Rate Mode (%)</label>
+            <p class="text-[11px] text-slate-500 mb-1.5">Triangular mode baseline (c)</p>
+            <input type="number" id="admModeRate" value="15.0" step="0.25"
+              class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono text-slate-200 focus:outline-none focus:border-amber-500">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Maximum Rate Ceiling (%)</label>
+            <p class="text-[11px] text-slate-500 mb-1.5">Triangular upper bound (b)</p>
+            <input type="number" id="admMaxRate" value="20.0" step="0.25"
+              class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono text-slate-200 focus:outline-none focus:border-amber-500">
+          </div>
+        </div>
+
+        <!-- Card 4: Covenant Policy & Capital Hurdle -->
+        <div class="glass-panel rounded-xl p-5 border border-slate-800 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
+            <h4 class="text-xs font-bold text-amber-400 uppercase tracking-wider">D. Covenant & Capital Cost</h4>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Minimum Allowed DSCR Covenant (x)</label>
+            <p class="text-[11px] text-slate-500 mb-1.5">Lender's mandatory DSCR safety ratio</p>
+            <input type="number" id="admMinDSCR" value="1.25" step="0.05" min="0.5" max="3.0"
+              class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono text-slate-200 focus:outline-none focus:border-amber-500">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Corporate Hurdle Rate (ROI %) </label>
+            <p class="text-[11px] text-slate-500 mb-1.5">Target internal return if capital is deployed</p>
+            <input type="number" id="admHurdleRate" value="12.0" step="0.5"
+              class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono text-slate-200 focus:outline-none focus:border-amber-500">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Cash Account Interest Yield (%)</label>
+            <p class="text-[11px] text-slate-500 mb-1.5">Risk-free yield earned on parked buffer</p>
+            <input type="number" id="admCashYield" value="4.0" step="0.25"
+              class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono text-slate-200 focus:outline-none focus:border-amber-500">
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL: SETTINGS & PREFERENCES (NEW SECTION) -->
+  <div id="settingsModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="glass-panel w-full max-w-lg rounded-2xl p-6 border border-slate-700 shadow-2xl relative" id="settingsBox">
+      
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-5">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-xl bg-blue-600/20 text-blue-400 flex items-center justify-center text-lg font-bold border border-blue-500/30">
+            ⚙️
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white" id="settingsHeading">Platform Settings & Preferences</h3>
+            <p class="text-xs text-slate-400">Appearance, currency display, and account security</p>
+          </div>
+        </div>
+        <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-white p-2">✕</button>
+      </div>
+
+      <div class="space-y-6">
+
+        <!-- 1. Theme Setting (Dark/Light mode) -->
+        <div class="p-3.5 bg-slate-900/80 rounded-xl border border-slate-800 flex items-center justify-between" id="themeSettingBox">
+          <div>
+            <div class="text-xs font-bold text-slate-200">Display Theme</div>
+            <div class="text-[11px] text-slate-400">Toggle between Dark Mode (Default) and Light Mode</div>
+          </div>
+          <button onclick="toggleTheme()" id="themeToggleBtn" class="px-3 py-1.5 rounded-lg text-xs font-mono font-semibold bg-slate-800 hover:bg-slate-700 text-blue-400 border border-slate-700 transition flex items-center gap-1.5">
+            <span id="themeIcon">🌙</span>
+            <span id="themeLabel">Dark</span>
+          </button>
+        </div>
+
+        <!-- 2. Currency Selection -->
+        <div class="p-3.5 bg-slate-900/80 rounded-xl border border-slate-800" id="currencySettingBox">
+          <label class="block text-xs font-bold text-slate-200 mb-1">Display Currency</label>
+          <p class="text-[11px] text-slate-400 mb-2.5">Select denomination for all input boxes, KPI cards, and risk charts</p>
+          <div class="grid grid-cols-3 sm:grid-cols-5 gap-2">
+            <button type="button" onclick="setCurrency('USD', '$')" class="curr-opt-btn p-2 rounded-lg border text-xs font-mono text-center transition bg-blue-600/20 border-blue-500 text-blue-300" data-curr="USD">
+              <strong>USD</strong><br><span class="text-[10px] text-slate-400">$</span>
+            </button>
+            <button type="button" onclick="setCurrency('SAR', 'SAR ')" class="curr-opt-btn p-2 rounded-lg border text-xs font-mono text-center transition bg-slate-800 border-slate-700 text-slate-300 hover:border-slate-500" data-curr="SAR">
+              <strong>SAR</strong><br><span class="text-[10px] text-slate-400">ر.س</span>
+            </button>
+            <button type="button" onclick="setCurrency('EUR', '€')" class="curr-opt-btn p-2 rounded-lg border text-xs font-mono text-center transition bg-slate-800 border-slate-700 text-slate-300 hover:border-slate-500" data-curr="EUR">
+              <strong>EUR</strong><br><span class="text-[10px] text-slate-400">€</span>
+            </button>
+            <button type="button" onclick="setCurrency('GBP', '£')" class="curr-opt-btn p-2 rounded-lg border text-xs font-mono text-center transition bg-slate-800 border-slate-700 text-slate-300 hover:border-slate-500" data-curr="GBP">
+              <strong>GBP</strong><br><span class="text-[10px] text-slate-400">£</span>
+            </button>
+            <button type="button" onclick="setCurrency('AED', 'AED ')" class="curr-opt-btn p-2 rounded-lg border text-xs font-mono text-center transition bg-slate-800 border-slate-700 text-slate-300 hover:border-slate-500" data-curr="AED">
+              <strong>AED</strong><br><span class="text-[10px] text-slate-400">د.إ</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 3. Change Password -->
+        <div class="p-3.5 bg-slate-900/80 rounded-xl border border-slate-800" id="passwordSettingBox">
+          <div class="text-xs font-bold text-slate-200 mb-1">Change Account Password</div>
+          <p class="text-[11px] text-slate-400 mb-3">Update your password for active user: <strong class="text-blue-400 font-mono" id="pwdUserTag">admin</strong></p>
+
+          <form id="changePasswordForm" onsubmit="event.preventDefault(); submitChangePassword();" class="space-y-3">
+            <div>
+              <label class="block text-[11px] text-slate-300 mb-1">Current Password</label>
+              <input type="password" id="currPwdInput" required placeholder="••••••••" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white">
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div>
+                <label class="block text-[11px] text-slate-300 mb-1">New Password</label>
+                <input type="password" id="newPwdInput" required placeholder="New password" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white">
+              </div>
+              <div>
+                <label class="block text-[11px] text-slate-300 mb-1">Confirm New Password</label>
+                <input type="password" id="confirmPwdInput" required placeholder="Confirm new password" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white">
+              </div>
+            </div>
+
+            <div id="pwdMsg" class="hidden text-xs p-2 rounded border"></div>
+
+            <div class="flex justify-end pt-1">
+              <button type="submit" class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold shadow transition">
+                Update Password
+              </button>
+            </div>
+          </form>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: AUTHENTICATION / LOGIN -->
+  <div id="loginModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="glass-panel w-full max-w-md rounded-2xl p-6 border border-slate-700 shadow-2xl relative">
+      <div class="text-center mb-6">
+        <div class="w-12 h-12 rounded-2xl bg-blue-600/20 text-blue-400 mx-auto flex items-center justify-center text-xl font-bold mb-3 border border-blue-500/30">
+          🔐
+        </div>
+        <h3 class="text-lg font-bold text-white">Sign In to FinRisk Platform</h3>
+        <p class="text-xs text-slate-400 mt-1">Authenticate to access customized access rights & model parameters</p>
+      </div>
+
+      <!-- Quick Switcher Demo Credentials -->
+      <div class="bg-slate-900/90 rounded-xl p-3 border border-slate-800 mb-5">
+        <div class="text-[11px] font-semibold text-slate-400 mb-2 uppercase tracking-wider">Quick Demo Logins:</div>
+        <div class="grid grid-cols-3 gap-2">
+          <button type="button" onclick="fillLoginForm('admin', 'admin123')" class="p-2 rounded bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 text-[11px] text-amber-300 font-mono text-center">
+            Admin<br><span class="text-[10px] text-slate-400">admin123</span>
+          </button>
+          <button type="button" onclick="fillLoginForm('analyst', 'analyst123')" class="p-2 rounded bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 text-[11px] text-blue-300 font-mono text-center">
+            Analyst<br><span class="text-[10px] text-slate-400">analyst123</span>
+          </button>
+          <button type="button" onclick="fillLoginForm('viewer', 'viewer123')" class="p-2 rounded bg-slate-700/30 hover:bg-slate-700/50 border border-slate-700 text-[11px] text-slate-300 font-mono text-center">
+            Viewer<br><span class="text-[10px] text-slate-400">viewer123</span>
+          </button>
+        </div>
+      </div>
+
+      <form id="loginForm" onsubmit="event.preventDefault(); submitLogin();" class="space-y-4">
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Username</label>
+          <input type="text" id="loginUsername" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-blue-500" placeholder="e.g. admin">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Password</label>
+          <input type="password" id="loginPassword" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-blue-500" placeholder="••••••••">
+        </div>
+
+        <div id="loginError" class="hidden text-xs text-rose-400 bg-rose-950/30 p-2 rounded border border-rose-800"></div>
+
+        <button type="submit" class="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs tracking-wide shadow-lg shadow-blue-600/30 transition">
+          Sign In
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: USER CREATION & ACCESS RIGHTS MANAGEMENT (RBAC) -->
+  <div id="userMgmtModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="glass-panel w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl p-6 border border-slate-700 shadow-2xl relative">
+      
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between pb-4 border-b border-slate-800 mb-5">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-xl bg-indigo-600/20 text-indigo-400 flex items-center justify-center text-lg font-bold border border-indigo-500/30">
+            👥
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white">User Administration & Granular Access Rights</h3>
+            <p class="text-xs text-slate-400">Create new users, define login credentials, and selectively authorize capabilities</p>
+          </div>
+        </div>
+        <button onclick="closeUserMgmtModal()" class="text-slate-400 hover:text-white p-2">✕</button>
+      </div>
+
+      <!-- Add New User Form Panel -->
+      <div class="bg-slate-900/80 rounded-xl p-5 border border-slate-800 mb-6">
+        <h4 class="text-xs font-bold text-indigo-300 uppercase tracking-wider mb-3 flex items-center gap-2">
+          <span>➕ Create New User Account</span>
+        </h4>
+
+        <form id="createUserForm" onsubmit="event.preventDefault(); submitCreateUser();" class="space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label class="block text-xs text-slate-300 mb-1">Username <span class="text-rose-400">*</span></label>
+              <input type="text" id="newUsername" required placeholder="e.g. j.faraj" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white">
+            </div>
+            <div>
+              <label class="block text-xs text-slate-300 mb-1">Full Name <span class="text-rose-400">*</span></label>
+              <input type="text" id="newFullName" required placeholder="e.g. Jamal Faraj" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white">
+            </div>
+            <div>
+              <label class="block text-xs text-slate-300 mb-1">Password <span class="text-rose-400">*</span></label>
+              <input type="password" id="newPassword" required placeholder="••••••••" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 items-center">
+            <div>
+              <label class="block text-xs text-slate-300 mb-1">Role Preset</label>
+              <select id="newRolePreset" onchange="applyRolePreset(this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white font-mono">
+                <option value="analyst">Risk Analyst</option>
+                <option value="admin">Administrator</option>
+                <option value="viewer">Viewer (Read-Only)</option>
+                <option value="custom">Custom Permissions</option>
+              </select>
+            </div>
+            <div class="sm:col-span-3 text-[11px] text-slate-400 pt-3 sm:pt-0">
+              Select a preset to auto-configure access rights, or toggle individual checkboxes below.
+            </div>
+          </div>
+
+          <!-- Permissions Selection Grid -->
+          <div class="bg-slate-950/70 p-3 rounded-lg border border-slate-800">
+            <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">Granular Access Rights (Permissions):</label>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+              <label class="flex items-center space-x-2 text-slate-300 cursor-pointer">
+                <input type="checkbox" id="permAdminConfig" class="rounded bg-slate-900 border-slate-700 text-blue-600 focus:ring-0">
+                <span>Configure Admin Model</span>
+              </label>
+              <label class="flex items-center space-x-2 text-slate-300 cursor-pointer">
+                <input type="checkbox" id="permRunSim" checked class="rounded bg-slate-900 border-slate-700 text-blue-600 focus:ring-0">
+                <span>Run Simulations</span>
+              </label>
+              <label class="flex items-center space-x-2 text-slate-300 cursor-pointer">
+                <input type="checkbox" id="permUserMgmt" class="rounded bg-slate-900 border-slate-700 text-blue-600 focus:ring-0">
+                <span>Manage Users & Rights</span>
+              </label>
+              <label class="flex items-center space-x-2 text-slate-300 cursor-pointer">
+                <input type="checkbox" id="permProfiles" checked class="rounded bg-slate-900 border-slate-700 text-blue-600 focus:ring-0">
+                <span>Manage Corporate Profiles</span>
+              </label>
+              <label class="flex items-center space-x-2 text-slate-300 cursor-pointer">
+                <input type="checkbox" id="permExport" checked class="rounded bg-slate-900 border-slate-700 text-blue-600 focus:ring-0">
+                <span>Export 1000 Runs CSV</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="flex justify-end">
+            <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold shadow transition">
+              Create User Account
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Users List Table -->
+      <div>
+        <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-3">Existing User Directory & Authorized Rights</h4>
+        <div class="overflow-x-auto rounded-xl border border-slate-800">
+          <table class="w-full text-left text-xs font-mono">
+            <thead class="bg-slate-900/90 text-slate-400 uppercase text-[10px]">
+              <tr>
+                <th class="py-2.5 px-3">User</th>
+                <th class="py-2.5 px-3">Role</th>
+                <th class="py-2.5 px-3">Admin Config</th>
+                <th class="py-2.5 px-3">Run Sim</th>
+                <th class="py-2.5 px-3">User Mgmt</th>
+                <th class="py-2.5 px-3">Export</th>
+                <th class="py-2.5 px-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="usersDirectoryBody" class="divide-y divide-slate-800 text-slate-300 bg-slate-950/40"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- APPLICATION LOGIC SCRIPT (INDUSTRY MACROECONOMIC REPOSITORIES & MONTE CARLO) -->
+  <script>
+    // --- CURRENCY PREFERENCE STATE ---
+    let currentCurrency = {
+      code: "USD",
+      symbol: "$"
+    };
+
+    // --- INDUSTRY MACROECONOMIC REPOSITORY ---
+    const industryMacroRepository = {
+      saas_tech: {
+        name: "Software & Enterprise Cloud (SaaS)",
+        gdpBeta: "Low-Moderate (Sticky Subscriptions)",
+        inflationSens: "High (Tech Wage Inflation)",
+        workingCapital: "Negative (Cash Collected Upfront)",
+        min_allowed_dscr: 1.40,
+        minVarCostMargin: 0.18,
+        maxVarCostMargin: 0.32,
+        meanGrowth: 0.22,
+        revVolatility: 0.16,
+        minRate: 0.09,
+        modeRate: 0.13,
+        maxRate: 0.18,
+        hurdleRate: 0.16,
+        cashYield: 0.04
+      },
+      manufacturing: {
+        name: "Industrial Manufacturing & Heavy Equipment",
+        gdpBeta: "High (Cyclical Capex Cycles)",
+        inflationSens: "High Lagged (Raw Materials PPI)",
+        workingCapital: "High (Raw Materials & WIP Inventory)",
+        min_allowed_dscr: 1.25,
+        minVarCostMargin: 0.48,
+        maxVarCostMargin: 0.65,
+        meanGrowth: 0.08,
+        revVolatility: 0.12,
+        minRate: 0.08,
+        modeRate: 0.14,
+        maxRate: 0.19,
+        hurdleRate: 0.10,
+        cashYield: 0.04
+      },
+      retail_consumer: {
+        name: "Retail, Wholesale & FMCG Distribution",
+        gdpBeta: "High (Consumer Disposable Income)",
+        inflationSens: "Immediate (Freight & CPI Pressure)",
+        workingCapital: "Very High (Seasonal Inventory Load)",
+        min_allowed_dscr: 1.30,
+        minVarCostMargin: 0.62,
+        maxVarCostMargin: 0.78,
+        meanGrowth: 0.06,
+        revVolatility: 0.14,
+        minRate: 0.085,
+        modeRate: 0.145,
+        maxRate: 0.195,
+        hurdleRate: 0.11,
+        cashYield: 0.04
+      },
+      construction_realestate: {
+        name: "Construction, Contracting & Real Estate",
+        gdpBeta: "Extreme (Hyper-cyclical Real Estate Cycles)",
+        inflationSens: "Low Pass-Through in Turnkey Contracts",
+        workingCapital: "Severe (Retention & Progress Billings)",
+        min_allowed_dscr: 1.25,
+        minVarCostMargin: 0.52,
+        maxVarCostMargin: 0.72,
+        meanGrowth: 0
